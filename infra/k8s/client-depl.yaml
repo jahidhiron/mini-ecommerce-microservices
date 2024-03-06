@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  # how to create individual pod during Deployment is going to create
+  template:
+    metadata:
+      labels:
+        app: client
+    # how pod is going to behave
+    spec:
+      containers:
+        - name: client # name of container
+          image: jahidhiron/client
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-srv
+spec:
+  # select pod to access
+  selector:
+    app: client
+  # all the ports that we are going to expose for that pod
+  ports:
+    - name: client
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
