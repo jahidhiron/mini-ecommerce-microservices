@@ -30,3 +30,11 @@ build:
         manual:
           - src: "**/*.js"
             dest: .
+    - image: jahidhiron/client
+      context: client
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.js"
+            dest: .

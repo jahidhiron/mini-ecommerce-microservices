@@ -3,11 +3,6 @@ import "express-async-errors";
 import cookieSession from "cookie-session";
 import { errorHandler, NotFoundError } from "@jahidticketing/common";
 
-import { currentUserRouter } from "./routes/current-user";
-import { signinRouter } from "./routes/signin";
-import { signoutRouter } from "./routes/signout";
-import { signupRouter } from "./routes/signup";
-
 const app = express();
 
 // traffic is proxied to our app through ingress-nginx
@@ -19,10 +14,6 @@ app.use(
     secure: process.env.NODE_ENV !== "test", // cookie will use if user visit by https connection
   })
 );
-app.use(currentUserRouter);
-app.use(signinRouter);
-app.use(signoutRouter);
-app.use(signupRouter);
 
 app.use("", async () => {
   throw new NotFoundError();

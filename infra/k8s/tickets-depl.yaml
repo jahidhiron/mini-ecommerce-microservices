@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tickets-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tickets
+  # how to create individual pod during Deployment is going to create
+  template:
+    metadata:
+      labels:
+        app: tickets
+    # how pod is going to behave
+    spec:
+      containers:
+        - name: tickets # name of container
+          image: jahidhiron/tickets
+          env:
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-srv
+spec:
+  # select pod to access
+  selector:
+    app: tickets
+  # all the ports that we are going to expose for that pod
+  ports:
+    - name: tickets
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

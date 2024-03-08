@@ -1,0 +1,12 @@
+==================== package.json ====================
+
+// tell typescript, what is the type defination entry file
+"types": "./build/index.d.ts", 
+  
+// npm will only look this folder file and dir during publishing
+"files": [
+    "build/**/*"
+],
+
+
+// learn more about npm symantic versioning
