@@ -1,5 +1,6 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { app } from '../app';
 
@@ -17,7 +18,7 @@ import { app } from '../app';
  * this reduces overhead when new global are introduced and is generally redundant now
  */
 declare global {
-  function signup(): Promise<string[]>; // this signup function will return a promise and that resolve array of string
+  function signup(): string[]; // this signup function will return a promise and that resolve array of string
 }
 
 /* same as above */
@@ -50,16 +51,13 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-global.signup = async () => {
-  const email = 'test@test.com';
-  const password = 'Test1234?';
-
-  const response = await request(app)
-    .post('/api/users/signup')
-    .send({ email, password })
-    .expect(201);
-
-  const cookie = response.get('Set-Cookie');
+global.signup = () => {
+  const payload = { id: '63e356ad415d7efbf4fd5ab9', email: 'test@test.com' };
+  const token = jwt.sign(payload, process.env.JWT_KEY!);
+  const session = { jwt: token };
+  const sessonJSON = JSON.stringify(session);
+  const base64 = Buffer.from(sessonJSON).toString('base64');
+  const cookie = [`express:sess=${base64}`];
 
   return cookie;
 };
