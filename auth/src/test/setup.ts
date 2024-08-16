@@ -3,38 +3,26 @@ import mongoose from 'mongoose';
 import request from 'supertest';
 import { app } from '../app';
 
-/* previous version */
-// declare global {
-//   namespace NodeJs {
-//     interface Global {
-//       signup(): Promise<string[]>; // this signup function will return a promise and that resolve array of string
-//     }
-//   }
-// }
-
-/**
- * Remove NodeJS.Global and fully rely on globalThis,
- * this reduces overhead when new global are introduced and is generally redundant now
- */
 declare global {
-  function signup(): Promise<string[]>; // this signup function will return a promise and that resolve array of string
+  namespace NodeJS {
+    interface Global {
+      signin(): Promise<string[]>;
+    }
+  }
 }
 
-/* same as above */
-// declare module globalThis {
-//   const signup: () => string[];
-// }
-
 let mongo: any;
-
 beforeAll(async () => {
-  process.env.JWT_KEY = 'test_key';
+  process.env.JWT_KEY = 'asdfasdf';
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
   mongo = new MongoMemoryServer();
-  await mongo.start();
-  const mongoUri = mongo.getUri();
+  const mongoUri = await mongo.getUri();
 
-  await mongoose.connect(mongoUri);
+  await mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
 });
 
 beforeEach(async () => {
@@ -50,13 +38,16 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-global.signup = async () => {
+global.signin = async () => {
   const email = 'test@test.com';
-  const password = 'Test1234?';
+  const password = 'password';
 
   const response = await request(app)
     .post('/api/users/signup')
-    .send({ email, password })
+    .send({
+      email,
+      password
+    })
     .expect(201);
 
   const cookie = response.get('Set-Cookie');

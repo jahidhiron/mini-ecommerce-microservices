@@ -18,6 +18,15 @@ spec:
         - name: tickets # name of container
           image: jahidhiron/tickets
           env:
+            - name: NATS_CLUSTER_ID
+              value: ticketing
+            # we are using pod name as nats client id
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: http://nats-srv:4222
             - name: MONGO_URI
               value: mongodb://tickets-mongo-srv:27017/tickets
             - name: JWT_KEY

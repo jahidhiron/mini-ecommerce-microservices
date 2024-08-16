@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
-import { requireAuth } from '@jahidticketing/common';
 import { body } from 'express-validator';
-import { validationResult } from 'express-validator';
+import { requireAuth, validateRequest } from '@cygnetops/common';
+import { Ticket } from '../models/ticket';
+import { TicketCreatedPublisher } from '../events/publishers/ticket-created-publisher';
+import { natsWrapper } from '../nats-wrapper';
 
 const router = express.Router();
 
@@ -14,9 +16,25 @@ router.post(
       .isFloat({ gt: 0 })
       .withMessage('Price must be greater than 0'),
   ],
-  validationResult,
-  (req: Request, res: Response) => {
-    res.sendStatus(200);
+  validateRequest,
+  async (req: Request, res: Response) => {
+    const { title, price } = req.body;
+
+    const ticket = Ticket.build({
+      title,
+      price,
+      userId: req.currentUser!.id,
+    });
+    await ticket.save();
+    new TicketCreatedPublisher(natsWrapper.client).publish({
+      id: ticket.id,
+      title: ticket.title,
+      price: ticket.price,
+      userId: ticket.userId,
+      version: ticket.version,
+    });
+
+    res.status(201).send(ticket);
   }
 );
 

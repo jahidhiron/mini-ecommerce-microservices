@@ -7,35 +7,30 @@ spec:
   selector:
     matchLabels:
       app: auth
-  # how to create individual pod during Deployment is going to create
   template:
     metadata:
       labels:
         app: auth
-    # how pod is going to behave
     spec:
       containers:
-        - name: auth # name of container
+        - name: auth
           image: jahidhiron/auth
           env:
             - name: MONGO_URI
-              value: mongodb://auth-mongo-srv:27017/auth
+              value: "mongodb://auth-mongo-srv:27017/auth"
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_KEY
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: auth-srv
 spec:
-  # select pod to access
   selector:
     app: auth
-  # all the ports that we are going to expose for that pod
   ports:
     - name: auth
       protocol: TCP

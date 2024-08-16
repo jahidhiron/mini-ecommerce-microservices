@@ -1,44 +1,35 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { app } from '../app';
+import jwt from 'jsonwebtoken';
 
-/* previous version */
-// declare global {
-//   namespace NodeJs {
-//     interface Global {
-//       signup(): Promise<string[]>; // this signup function will return a promise and that resolve array of string
-//     }
-//   }
-// }
-
-/**
- * Remove NodeJS.Global and fully rely on globalThis,
- * this reduces overhead when new global are introduced and is generally redundant now
- */
 declare global {
-  function signup(): string[]; // this signup function will return a promise and that resolve array of string
+  namespace NodeJS {
+    interface Global {
+      signin(): string[];
+    }
+  }
 }
 
-/* same as above */
-// declare module globalThis {
-//   const signup: () => string[];
-// }
+jest.mock('../nats-wrapper');
 
 let mongo: any;
-
 beforeAll(async () => {
-  process.env.JWT_KEY = 'test_key';
+  process.env.JWT_KEY = 'asdfasdf';
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
   mongo = new MongoMemoryServer();
-  await mongo.start();
-  const mongoUri = mongo.getUri();
+  const mongoUri = await mongo.getUri();
 
-  await mongoose.connect(mongoUri);
+  await mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
 });
 
 beforeEach(async () => {
+  jest.clearAllMocks();
   const collections = await mongoose.connection.db.collections();
 
   for (let collection of collections) {
@@ -51,13 +42,25 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-global.signup = () => {
-  const payload = { id: '63e356ad415d7efbf4fd5ab9', email: 'test@test.com' };
-  const token = jwt.sign(payload, process.env.JWT_KEY!);
-  const session = { jwt: token };
-  const sessonJSON = JSON.stringify(session);
-  const base64 = Buffer.from(sessonJSON).toString('base64');
-  const cookie = [`express:sess=${base64}`];
+global.signin = () => {
+  // Build a JWT payload.  { id, email }
+  const payload = {
+    id: new mongoose.Types.ObjectId().toHexString(),
+    email: 'test@test.com',
+  };
 
-  return cookie;
+  // Create the JWT!
+  const token = jwt.sign(payload, process.env.JWT_KEY!);
+
+  // Build session Object. { jwt: MY_JWT }
+  const session = { jwt: token };
+
+  // Turn that session into JSON
+  const sessionJSON = JSON.stringify(session);
+
+  // Take JSON and encode it as base64
+  const base64 = Buffer.from(sessionJSON).toString('base64');
+
+  // return a string thats the cookie with the encoded data
+  return [`express:sess=${base64}`];
 };

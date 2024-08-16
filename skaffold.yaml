@@ -1,12 +1,10 @@
 apiVersion: skaffold/v2alpha3
 kind: Config
-# all the config file [./infra/k8s] that we want to load into cluster
 deploy:
   kubectl:
     manifests:
       - ./infra/k8s/*
 build:
-  # whenever we build an image do not try to push to dockerhub
   local:
     push: false
   artifacts:
@@ -14,27 +12,47 @@ build:
       context: auth
       docker:
         dockerfile: Dockerfile
-      # how to handle skaffold if any file changes
       sync:
         manual:
-          # watch skaffold any ts file under src folder and affect to pod directly
           - src: "src/**/*.ts"
-            # where to sync inside of our running container > . means, where the file found and through
-            # to corrosponding path inside the container
             dest: .
-    - image: jahidhiron/client
-      context: client
+    # - image: jahidhiron/client
+    #   context: client
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     manual:
+    #       - src: "**/*.js"
+    #         dest: .
+    - image: jahidhiron/tickets
+      context: tickets
       docker:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "**/*.js"
+          - src: "src/**/*.ts"
             dest: .
-    - image: jahidhiron/client
-      context: client
+    - image: jahidhiron/orders
+      context: orders
       docker:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "**/*.js"
+          - src: "src/**/*.ts"
+            dest: .
+    - image: jahidhiron/expiration
+      context: expiration
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: jahidhiron/payments
+      context: payments
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
             dest: .
